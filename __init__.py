@@ -56,8 +56,8 @@ class SkillSymcon(MycroftSkill):
     #~ It then registers that the function handle_thank_you_intent is what should be called
     #~ if the ThankYouKeyword is found. All of the other intents are registered in the same way.
     def initialize(self):
-        self.load_vocab_files(join(dirname(__file__), 'vocab', self.lang))
-        self.load_regex_files(join(dirname(__file__), 'regex', self.lang))
+        #self.load_vocab_files(join(dirname(__file__), 'vocab', self.lang))
+        #self.load_regex_files(join(dirname(__file__), 'regex', self.lang))
         self.__build_test_intent()
         self.__build_get_intent()
 

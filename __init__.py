@@ -65,9 +65,15 @@ class SkillSymcon(MycroftSkill):
     #~ It then registers that the function handle_thank_you_intent is what should be called
     #~ if the ThankYouKeyword is found. All of the other intents are registered in the same way.
     def initialize(self):
-        self.__build_test_intent()
-        self.__build_get_intent()
 
+        intent = IntentBuilder("SymconTestIntent").\
+            require("SymconKeyword").build()
+        self.register_intent(intent, self.handle_symcon_test_intent)
+
+        intent = IntentBuilder("SymconGetIntent").\
+            require("SymconGetKeyword").build()
+        self.register_intent(intent, self.handle_symcon_get_intent)
+ 
     def symconClient(self, method, param):
         auth=HTTPBasicAuth(self.username,self.password)
         headers = {'content-type': 'application/json'}
@@ -77,20 +83,10 @@ class SkillSymcon(MycroftSkill):
 
         if req.status_code == 200:
             json_response = req.json()
-            return req
+            return json_response
         else:
             self.speak_dialog("speakValue",{"temperature":temperature})
             pass
-
-    def __build_test_intent(self):
-        intent = IntentBuilder("SymconTestIntent").\
-            require("SymconKeyword").build()
-        self.register_intent(intent, self.handle_symcon_test_intent)
-
-    def __build_get_intent(self):
-        intent = IntentBuilder("SymconGetIntent").\
-            require("SymconGetKeyword").build()
-        self.register_intent(intent, self.handle_symcon_get_intent)
         
     #~ handle_
     #~ This is where you tell Mycroft to actually do what you want him to do.
@@ -112,8 +108,7 @@ class SkillSymcon(MycroftSkill):
 
     def handle_symcon_get_intent(self, message):
         result = self.symconClient("GetValueFloat",[self.testid])
-        decoded = json.loads(result.text)
-        temperature = (decoded["result"])
+        temperature = (result["result"])
     
         self.speak_dialog("speakValue",{"temperature":temperature})
 

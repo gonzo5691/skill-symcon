@@ -1,0 +1,7 @@
+{
+  "utterance": "moon test",
+  "intent_type": "SymconTestIntent",
+  "intent": {
+    "SymconKeyword": "moon test"
+  }
+}

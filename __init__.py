@@ -42,7 +42,12 @@ class SymconSkill(MycroftSkill):
     #~ In it you should call the constructor of the MycroftSkill class using super and initialize
     #~ any member variable to the values you need. In the Hello World skill, this looks like
     def __init__(self):
-            super(SymconSkill, self).__init__(name="SymconSkill")
+            super(SkillSymcon, self).__init__(name="SkillSymcon")
+            self.host = SkillSymcon(self.config.get('host'))
+            self.username = SkillSymcon(self.config.get('username'))
+            LOGGER.debug("username: %s" % username)
+            self.password = SkillSymcon(self.config.get('password'))
+            self.testid = SkillSymcon(self.config.get('testid'))
 
     #~ This is where you build each intent you want to create. For the Hello World skill, this looks like
     #~
@@ -58,11 +63,17 @@ class SymconSkill(MycroftSkill):
     #~ It then registers that the function handle_thank_you_intent is what should be called
     #~ if the ThankYouKeyword is found. All of the other intents are registered in the same way.
     def initialize(self):
+        self.load_vocab_files(join(dirname(__file__), 'vocab', self.lang))
+        self.load_regex_files(join(dirname(__file__), 'regex', self.lang))
+        self.__build_test_intent()
+        self.__build_get_intent()
+
+    def __build_test_intent(self):
         symcon_test_intent = IntentBuilder("SymconTestIntent").\
             require("SymconKeyword").build()
         self.register_intent(symcon_test_intent, self.handle_symcon_test_intent)
 
-    def initialize(self):
+    def __build_get_intent(self):
         symcon_get_intent = IntentBuilder("SymconGetIntent").\
             require("SymconGetKeyword").build()
         self.register_intent(symcon_get_intent, self.handle_symcon_get_intent)
@@ -86,7 +97,7 @@ class SymconSkill(MycroftSkill):
         self.speak_dialog("welcome")
 
     def handle_symcon_get_intent(self, message):
-        url = configuration.url
+        url = self.host
         auth=HTTPBasicAuth(configuration.username,configuration.password)
         headers = {'content-type': 'application/json'}
         payload = {"method": "GetValueFloat", "params": [configuration.testid], "jsonrpc": "2.0", "id": "0"}
@@ -113,4 +124,4 @@ class SymconSkill(MycroftSkill):
         pass
 
 def create_skill():
-    return SymconSkill()
+    return SkillSymcon()

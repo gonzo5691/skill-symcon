@@ -1,4 +1,4 @@
-#  __init__py
+#  __init__.py
 #
 #  Copyright 2017  <pi@picroft>
 #
@@ -24,6 +24,12 @@ from os.path import dirname
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
+
+import requests
+from requests.auth import HTTPBasicAuth
+import json
+
+import configuration
 
 __author__ = 'ralf'
 
@@ -56,6 +62,11 @@ class SymconSkill(MycroftSkill):
             require("SymconKeyword").build()
         self.register_intent(symcon_test_intent, self.handle_symcon_test_intent)
 
+    def initialize(self):
+        symcon_get_intent = IntentBuilder("SymconGetIntent").\
+            require("SymconGetKeyword").build()
+        self.register_intent(symcon_get_intent, self.handle_symcon_get_intent)
+        
     #~ handle_
     #~ This is where you tell Mycroft to actually do what you want him to do.
     #~ This can range from something like a call to an API to opening an application.
@@ -74,6 +85,20 @@ class SymconSkill(MycroftSkill):
     def handle_symcon_test_intent(self, message):
         self.speak_dialog("welcome")
 
+    def handle_symcon_get_intent(self, message):
+        url = configuration.url
+        auth=HTTPBasicAuth(configuration.username,configuration.password)
+        headers = {'content-type': 'application/json'}
+        payload = {"method": "GetValueFloat", "params": [configuration.testid], "jsonrpc": "2.0", "id": "0"}
+        r = requests.post(url, auth=auth, data=json.dumps(payload), headers=headers, stream=True)
+        
+        decoded = json.loads(r.text)
+        
+        //print(json.dumps(decoded, sort_keys=True, indent=4))
+        
+        temperature = (decoded["result"])
+    
+        self.speak_dialog("speakValue",{"temperature":temperature})
     #~ stop
     #~ This function is used to determine what Mycroft does if stop is said while this skill is running.
     #~ In the Hello World skill, since Mycroft is saying simple phrases,

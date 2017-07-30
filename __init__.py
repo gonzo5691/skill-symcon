@@ -40,13 +40,17 @@ class SkillSymcon(MycroftSkill):
     #~ In it you should call the constructor of the MycroftSkill class using super and initialize
     #~ any member variable to the values you need. In the Hello World skill, this looks like
     def __init__(self):
-            super(SkillSymcon, self).__init__(name="SkillSymcon")
-            self.url = self.config.get('url')
-            self.username = self.config.get('username')
-            LOGGER.debug("username: %s" % username)
-            self.password = self.config.get('password')
-            self.testid = self.config.get('testid')
+        super(SkillSymcon, self).__init__(name="SkillSymcon")
 
+        # read configuration
+        self.url = self.config.get('url')
+        self.username = self.config.get('username')
+        LOGGER.debug("username: %s" % self.username)
+        self.password = self.config.get('password')
+        self.testid = self.config.get('testid')
+
+        self.allVariables = dict()
+        
     #~ This is where you build each intent you want to create. For the Hello World skill, this looks like
     #~
     #~ def initialize(self):
@@ -61,10 +65,22 @@ class SkillSymcon(MycroftSkill):
     #~ It then registers that the function handle_thank_you_intent is what should be called
     #~ if the ThankYouKeyword is found. All of the other intents are registered in the same way.
     def initialize(self):
-        #self.load_vocab_files(join(dirname(__file__), 'vocab', self.lang))
-        #self.load_regex_files(join(dirname(__file__), 'regex', self.lang))
         self.__build_test_intent()
         self.__build_get_intent()
+
+    def symconClient(self, method, param):
+        auth=HTTPBasicAuth(self.user,self.password)
+        headers = {'content-type': 'application/json'}
+        
+        payload = {"method": method, "params": param, "jsonrpc": "2.0", "id": "0"}
+        req = requests.post(self.url, auth=auth, data=json.dumps(payload), headers=headers, stream=True)
+
+        if req.status_code == 200:
+            json_response = req.json()
+            return req
+        else:
+            self.speak_dialog("speakValue",{"temperature":temperature})
+            pass
 
     def __build_test_intent(self):
         intent = IntentBuilder("SymconTestIntent").\
@@ -95,12 +111,8 @@ class SkillSymcon(MycroftSkill):
         self.speak_dialog("welcome")
 
     def handle_symcon_get_intent(self, message):
-        auth=HTTPBasicAuth(self.username,self.password)
-        headers = {'content-type': 'application/json'}
-        payload = {"method": "GetValueFloat", "params": [self.testid], "jsonrpc": "2.0", "id": "0"}
-        r = requests.post(self.url, auth=auth, data=json.dumps(payload), headers=headers, stream=True)
-        
-        decoded = json.loads(r.text)
+        result = symconClient("GetValueFloat",[self.testid])
+        decoded = json.loads(result.text)
         temperature = (decoded["result"])
     
         self.speak_dialog("speakValue",{"temperature":temperature})

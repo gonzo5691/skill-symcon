@@ -41,6 +41,11 @@ class SkillSymcon(MycroftSkill):
     #~ any member variable to the values you need. In the Hello World skill, this looks like
     def __init__(self):
             super(SkillSymcon, self).__init__(name="SkillSymcon")
+            self.url = self.config.get('url')
+            self.username = self.config.get('username')
+            LOGGER.debug("username: %s" % username)
+            self.password = self.config.get('password')
+            self.testid = self.config.get('testid')
 
     #~ This is where you build each intent you want to create. For the Hello World skill, this looks like
     #~
@@ -90,16 +95,10 @@ class SkillSymcon(MycroftSkill):
         self.speak_dialog("welcome")
 
     def handle_symcon_get_intent(self, message):
-        self.url = self.config.get('url')
-        self.username = self.config.get('username')
-        LOGGER.debug("username: %s" % username)
-        self.password = self.config.get('password')
-        self.testid = self.config.get('testid')
-
         auth=HTTPBasicAuth(self.username,self.password)
         headers = {'content-type': 'application/json'}
         payload = {"method": "GetValueFloat", "params": [self.testid], "jsonrpc": "2.0", "id": "0"}
-        r = requests.post(url, auth=auth, data=json.dumps(payload), headers=headers, stream=True)
+        r = requests.post(self.url, auth=auth, data=json.dumps(payload), headers=headers, stream=True)
         
         decoded = json.loads(r.text)
         temperature = (decoded["result"])

@@ -69,7 +69,7 @@ class SkillSymcon(MycroftSkill):
         self.__build_get_intent()
 
     def symconClient(self, method, param):
-        auth=HTTPBasicAuth(self.user,self.password)
+        auth=HTTPBasicAuth(self.username,self.password)
         headers = {'content-type': 'application/json'}
         
         payload = {"method": method, "params": param, "jsonrpc": "2.0", "id": "0"}
@@ -111,7 +111,7 @@ class SkillSymcon(MycroftSkill):
         self.speak_dialog("welcome")
 
     def handle_symcon_get_intent(self, message):
-        result = symconClient("GetValueFloat",[self.testid])
+        result = self.symconClient("GetValueFloat",[self.testid])
         decoded = json.loads(result.text)
         temperature = (decoded["result"])
     

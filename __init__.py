@@ -29,8 +29,6 @@ import requests
 from requests.auth import HTTPBasicAuth
 import json
 
-import configuration
-
 __author__ = 'ralf'
 
 LOGGER = getLogger(__name__)
@@ -43,11 +41,6 @@ class SymconSkill(MycroftSkill):
     #~ any member variable to the values you need. In the Hello World skill, this looks like
     def __init__(self):
             super(SkillSymcon, self).__init__(name="SkillSymcon")
-            self.host = SkillSymcon(self.config.get('host'))
-            self.username = SkillSymcon(self.config.get('username'))
-            LOGGER.debug("username: %s" % username)
-            self.password = SkillSymcon(self.config.get('password'))
-            self.testid = SkillSymcon(self.config.get('testid'))
 
     #~ This is where you build each intent you want to create. For the Hello World skill, this looks like
     #~
@@ -69,14 +62,14 @@ class SymconSkill(MycroftSkill):
         self.__build_get_intent()
 
     def __build_test_intent(self):
-        symcon_test_intent = IntentBuilder("SymconTestIntent").\
+        intent = IntentBuilder("SymconTestIntent").\
             require("SymconKeyword").build()
-        self.register_intent(symcon_test_intent, self.handle_symcon_test_intent)
+        self.register_intent(intent, self.handle_symcon_test_intent)
 
     def __build_get_intent(self):
-        symcon_get_intent = IntentBuilder("SymconGetIntent").\
+        intent = IntentBuilder("SymconGetIntent").\
             require("SymconGetKeyword").build()
-        self.register_intent(symcon_get_intent, self.handle_symcon_get_intent)
+        self.register_intent(intent, self.handle_symcon_get_intent)
         
     #~ handle_
     #~ This is where you tell Mycroft to actually do what you want him to do.
@@ -97,10 +90,15 @@ class SymconSkill(MycroftSkill):
         self.speak_dialog("welcome")
 
     def handle_symcon_get_intent(self, message):
+        self.host = SkillSymcon(self.config.get('host'))
+        self.username = SkillSymcon(self.config.get('username'))
+        LOGGER.debug("username: %s" % username)
+        self.password = SkillSymcon(self.config.get('password'))
+        self.testid = SkillSymcon(self.config.get('testid'))
         url = self.host
-        auth=HTTPBasicAuth(configuration.username,configuration.password)
+        auth=HTTPBasicAuth(self.username,self.password)
         headers = {'content-type': 'application/json'}
-        payload = {"method": "GetValueFloat", "params": [configuration.testid], "jsonrpc": "2.0", "id": "0"}
+        payload = {"method": "GetValueFloat", "params": [self.testid], "jsonrpc": "2.0", "id": "0"}
         r = requests.post(url, auth=auth, data=json.dumps(payload), headers=headers, stream=True)
         
         decoded = json.loads(r.text)

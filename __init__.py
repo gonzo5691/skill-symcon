@@ -90,12 +90,12 @@ class SkillSymcon(MycroftSkill):
         self.speak_dialog("welcome")
 
     def handle_symcon_get_intent(self, message):
-        self.host = SkillSymcon(self.config.get('host'))
-        self.username = SkillSymcon(self.config.get('username'))
+        self.url = self.config.get('url')
+        self.username = self.config.get('username')
         LOGGER.debug("username: %s" % username)
-        self.password = SkillSymcon(self.config.get('password'))
-        self.testid = SkillSymcon(self.config.get('testid'))
-        url = self.host
+        self.password = self.config.get('password')
+        self.testid = self.config.get('testid')
+
         auth=HTTPBasicAuth(self.username,self.password)
         headers = {'content-type': 'application/json'}
         payload = {"method": "GetValueFloat", "params": [self.testid], "jsonrpc": "2.0", "id": "0"}

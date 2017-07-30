@@ -33,7 +33,7 @@ __author__ = 'ralf'
 
 LOGGER = getLogger(__name__)
 
-class SymconSkill(MycroftSkill):
+class SkillSymcon(MycroftSkill):
 
     #~ __init__
     #~ This is the constructor for the class, called when a new object is created.

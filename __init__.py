@@ -18,39 +18,38 @@
 #  MA 02110-1301, USA.
 #
 #
-
+ 
 from os.path import dirname
-
+ 
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
-
+ 
 import requests
 from requests.auth import HTTPBasicAuth
 import json
-
+ 
 __author__ = 'ralf'
-
+ 
 LOGGER = getLogger(__name__)
-
+ 
 class SkillSymcon(MycroftSkill):
-
+ 
     #~ __init__
     #~ This is the constructor for the class, called when a new object is created.
     #~ In it you should call the constructor of the MycroftSkill class using super and initialize
     #~ any member variable to the values you need. In the Hello World skill, this looks like
     def __init__(self):
         super(SkillSymcon, self).__init__(name="SkillSymcon")
-
+ 
         # read configuration
         self.url = self.config.get('url')
         self.username = self.config.get('username')
-        LOGGER.debug("username: %s" % self.username)
         self.password = self.config.get('password')
         self.testid = self.config.get('testid')
-
+ 
         self.allVariables = dict()
-        
+         
     #~ This is where you build each intent you want to create. For the Hello World skill, this looks like
     #~
     #~ def initialize(self):
@@ -65,29 +64,33 @@ class SkillSymcon(MycroftSkill):
     #~ It then registers that the function handle_thank_you_intent is what should be called
     #~ if the ThankYouKeyword is found. All of the other intents are registered in the same way.
     def initialize(self):
-
-        intent = IntentBuilder("SymconTestIntent").\
-            require("SymconKeyword").build()
-        self.register_intent(intent, self.handle_symcon_test_intent)
-
-        intent = IntentBuilder("SymconGetIntent").\
-            require("SymconGetKeyword").build()
-        self.register_intent(intent, self.handle_symcon_get_intent)
- 
+        self.__build_test_intent()
+        self.__build_get_intent()
+  
     def symconClient(self, method, param):
         auth=HTTPBasicAuth(self.username,self.password)
         headers = {'content-type': 'application/json'}
-        
+          
         payload = {"method": method, "params": param, "jsonrpc": "2.0", "id": "0"}
         req = requests.post(self.url, auth=auth, data=json.dumps(payload), headers=headers, stream=True)
-
+ 
         if req.status_code == 200:
             json_response = req.json()
-            return json_response
+            return req
         else:
             self.speak_dialog("speakValue",{"temperature":temperature})
             pass
-        
+
+    def __build_test_intent(self):
+        intent = IntentBuilder("SymconTestIntent").\
+            require("SymconKeyword").build()
+        self.register_intent(intent, self.handle_symcon_test_intent)
+ 
+    def __build_get_intent(self):
+        intent = IntentBuilder("SymconGetIntent").\
+            require("SymconGetKeyword").build()
+        self.register_intent(intent, self.handle_symcon_get_intent)
+         
     #~ handle_
     #~ This is where you tell Mycroft to actually do what you want him to do.
     #~ This can range from something like a call to an API to opening an application.
@@ -105,13 +108,14 @@ class SkillSymcon(MycroftSkill):
     #~ Note also that it always takes two arguments, self and message, even if you never use message.
     def handle_symcon_test_intent(self, message):
         self.speak_dialog("welcome")
-
+  
     def handle_symcon_get_intent(self, message):
         result = self.symconClient("GetValueFloat",[self.testid])
-        temperature = (result["result"])
-    
+        decoded = json.loads(result.text)
+        temperature = (decoded["result"])
+      
         self.speak_dialog("speakValue",{"temperature":temperature})
-
+ 
     #~ stop
     #~ This function is used to determine what Mycroft does if stop is said while this skill is running.
     #~ In the Hello World skill, since Mycroft is saying simple phrases,
@@ -124,6 +128,6 @@ class SkillSymcon(MycroftSkill):
     #~ For an example of a skill that uses the stop function, look at the NPR News skill.
     def stop(self):
         pass
-
+ 
 def create_skill():
     return SkillSymcon()

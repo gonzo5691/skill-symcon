@@ -47,6 +47,7 @@ class SkillSymcon(MycroftSkill):
         self.username = self.config.get('username')
         self.password = self.config.get('password')
         self.testid = self.config.get('testid')
+        self.scriptid = self.config.get('scriptid')
  
         self.allVariables = dict()
          
@@ -67,10 +68,10 @@ class SkillSymcon(MycroftSkill):
         self.__build_test_intent()
         self.__build_get_intent()
   
+    # Function to communicate with Symcon Server
     def symconClient(self, method, param):
         auth=HTTPBasicAuth(self.username,self.password)
-        headers = {'content-type': 'application/json'}
-          
+        headers = {'content-type': 'application/json'}          
         payload = {"method": method, "params": param, "jsonrpc": "2.0", "id": "0"}
         req = requests.post(self.url, auth=auth, data=json.dumps(payload), headers=headers, stream=True)
  
@@ -80,6 +81,25 @@ class SkillSymcon(MycroftSkill):
         else:
             self.speak_dialog("speakValue",{"temperature":temperature})
             pass
+
+    # Get best match between message Content and SymconItems
+    def findItemName(self, messageItem):
+        itemDictionary = json.loads(symconClient("IPS_RunScriptWait",[self.scriptid])['result'])
+        bestScore = 0
+        score = 0
+        bestItem = None		
+        
+        try:
+            for itemName, itemLabel in itemDictionary.items():
+                score = fuzz.ratio(messageItem, itemName)
+                print(itemName,score)
+                if score > bestScore:
+                    bestScore = score
+                    bestItem = (itemName,itemLabel['objectID'])
+        except KeyError:
+                    pass
+                    
+        return bestItem
 
     def __build_test_intent(self):
         intent = IntentBuilder("SymconTestIntent").\
@@ -97,7 +117,7 @@ class SkillSymcon(MycroftSkill):
     #~ In the Hello World skill, each intent simply tells Mycroft to speak from the dialog file..
     #~
     #~ def handle_thank_you_intent(self, message):
-    #~  self.speak_dialog("welcome")
+    #~     self.speak_dialog("welcome")
     #~
     #~ This simply tells Mycroft to randomly select one of the pieces of dialogue from the
     #~ welcome.dialog file and speak it. In your skill, you can include as many ways of phrasing
@@ -110,11 +130,11 @@ class SkillSymcon(MycroftSkill):
         self.speak_dialog("welcome")
   
     def handle_symcon_get_intent(self, message):
-        result = self.symconClient("GetValueFloat",[self.testid])
-        decoded = json.loads(result.text)
-        temperature = (decoded["result"])
-      
-        self.speak_dialog("speakValue",{"temperature":temperature})
+        item = self.findItemName(message)
+        #decoded = json.loads(result.text)
+        //temperature = (decoded["result"])
+        
+        self.speak_dialog(item)
  
     #~ stop
     #~ This function is used to determine what Mycroft does if stop is said while this skill is running.
@@ -122,7 +142,7 @@ class SkillSymcon(MycroftSkill):
     #~ the stop function just contains the word pass:
     #~
     #~ def stop(self)
-        #~ pass
+    #~     pass
     #~ The keyword pass does nothing when executed.
     #~ It is simply used when code is required syntactically but you do not want any code to run.
     #~ For an example of a skill that uses the stop function, look at the NPR News skill.

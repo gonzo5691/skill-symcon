@@ -93,7 +93,7 @@ class SkillSymcon(MycroftSkill):
         try:
             for itemName, itemLabel in itemDictionary.items():
                 score = fuzz.ratio(messageItem, itemName)
-                #print(itemName,score)
+                LOGGER.info("Score: {}; Item: {}".format(score,itemName))
                 if score > bestScore:
                     bestScore = score
                     bestItem = itemLabel
@@ -105,8 +105,8 @@ class SkillSymcon(MycroftSkill):
     def __build_get_intent(self):
         intent = IntentBuilder("SymconGetIntent").\
             require("getKeyword").\
-            require("rooms").\
             require("attribute").\
+            optional("room").\
             build()
         self.register_intent(intent, self.handle_symcon_get_intent)
          
@@ -135,9 +135,9 @@ class SkillSymcon(MycroftSkill):
         LOGGER.info(item)
         LOGGER.info(item['commandString'])
         LOGGER.info(item['objectID'])
-	value = self.symconClient(item['commandString'],[item['objectID']])
+	value = self.symconClient("GetValue",[item['objectID']])
         LOGGER.info(value['result'])
-        self.speak_dialog("speakValue",{"room":item['room'],"attribute":value['attribute'],"value":value['result']})
+        self.speak_dialog("speakValue",{"room":item['room'],"attribute":item['attribute'],"value":value['result']})
  
     #~ stop
     #~ This function is used to determine what Mycroft does if stop is said while this skill is running.

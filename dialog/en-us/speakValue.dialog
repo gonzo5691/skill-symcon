@@ -1,2 +1,2 @@
-The {{room}}{{attribut}} is {{temperature}} {{unit}}.
-The {{attribut}} in the {{room}} is {{temperature}} {{unit}}.
+The {{room}} {{attribute}} is {{value}} {{unit}}.
+The {{attribute}} in the {{room}} is {{value}} {{unit}}.

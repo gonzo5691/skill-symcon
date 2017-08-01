@@ -1,1 +1,2 @@
-The Pooltemperature is {{temperature}} degree celsius.
+The {{room}}{{attribut}} is {{temperature}} {{unit}}.
+The {{attribut}} in the {{room}} is {{temperature}} {{unit}}.

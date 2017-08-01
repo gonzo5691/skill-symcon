@@ -28,13 +28,15 @@ from mycroft.util.log import getLogger
 import requests
 from requests.auth import HTTPBasicAuth
 import json
- 
+
+from fuzzywuzzy import fuzz
+
 __author__ = 'ralf'
- 
+
 LOGGER = getLogger(__name__)
- 
+
 class SkillSymcon(MycroftSkill):
- 
+
     #~ __init__
     #~ This is the constructor for the class, called when a new object is created.
     #~ In it you should call the constructor of the MycroftSkill class using super and initialize
@@ -65,7 +67,6 @@ class SkillSymcon(MycroftSkill):
     #~ It then registers that the function handle_thank_you_intent is what should be called
     #~ if the ThankYouKeyword is found. All of the other intents are registered in the same way.
     def initialize(self):
-        self.__build_test_intent()
         self.__build_get_intent()
   
     # Function to communicate with Symcon Server
@@ -77,14 +78,14 @@ class SkillSymcon(MycroftSkill):
  
         if req.status_code == 200:
             json_response = req.json()
-            return req
+            return json_response
         else:
             self.speak_dialog("speakValue",{"temperature":temperature})
             pass
 
     # Get best match between message Content and SymconItems
     def findItemName(self, messageItem):
-        itemDictionary = json.loads(symconClient("IPS_RunScriptWait",[self.scriptid])['result'])
+        itemDictionary = json.loads(self.symconClient("IPS_RunScriptWait",[self.scriptid])['result'])
         bestScore = 0
         score = 0
         bestItem = None		
@@ -92,23 +93,21 @@ class SkillSymcon(MycroftSkill):
         try:
             for itemName, itemLabel in itemDictionary.items():
                 score = fuzz.ratio(messageItem, itemName)
-                print(itemName,score)
+                #print(itemName,score)
                 if score > bestScore:
                     bestScore = score
-                    bestItem = (itemName,itemLabel['objectID'])
+                    bestItem = itemLabel
         except KeyError:
                     pass
                     
         return bestItem
 
-    def __build_test_intent(self):
-        intent = IntentBuilder("SymconTestIntent").\
-            require("SymconKeyword").build()
-        self.register_intent(intent, self.handle_symcon_test_intent)
- 
     def __build_get_intent(self):
         intent = IntentBuilder("SymconGetIntent").\
-            require("SymconGetKeyword").build()
+            require("getKeyword").\
+            require("rooms").\
+            require("attribute").\
+            build()
         self.register_intent(intent, self.handle_symcon_get_intent)
          
     #~ handle_
@@ -130,11 +129,15 @@ class SkillSymcon(MycroftSkill):
         self.speak_dialog("welcome")
   
     def handle_symcon_get_intent(self, message):
-        item = self.findItemName(message)
+        LOGGER.info(message.data.get('utterance'))
+        item = self.findItemName(message.data.get('utterance'))
         #decoded = json.loads(result.text)
-        //temperature = (decoded["result"])
-        
-        self.speak_dialog(item)
+        LOGGER.info(item)
+        LOGGER.info(item['commandString'])
+        LOGGER.info(item['objectID'])
+	value = self.symconClient(item['commandString'],[item['objectID']])
+        LOGGER.info(value['result'])
+        self.speak_dialog("speakValue",{"room":item['room'],"attribute":value['attribute'],"value":value['result']})
  
     #~ stop
     #~ This function is used to determine what Mycroft does if stop is said while this skill is running.
